@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/mvezer/qrn-tests/issues"
   },
-  "homepage": "https://github.com/mvezer/qrn-tests#readme"
+  "homepage": "https://github.com/mvezer/qrn-tests#readme",
+  "dependencies": {
+    "restify": "^6.3.4"
+  }
 }

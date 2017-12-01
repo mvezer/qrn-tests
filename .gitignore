@@ -58,3 +58,5 @@ typings/
 .env
 
 qrngdemos/
+
+.DS_Store

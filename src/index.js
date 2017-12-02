@@ -1,36 +1,29 @@
-const ffi = require('ffi');
-const ref = require('ref');
-const libbQRNGcodes =require('../libQRNGcodes');
+process.env.DEBUG = 'qrn-service:*';
 
-const BUFFER_SIZE = 1024*1024;
+const QrngService = require('./services/qrngService');
+const restify = require('restify');
+const config = require('./config');
+const log = require('debug')('qrn-service:server');
 
-let buffer = new Buffer(BUFFER_SIZE);
-const USERNAME = 'mvezer';
-const PASSWORD = 'dtJeH9BRXFRC';
+async function getRandomNumbers(req, res, next) {
+  let randomNumbers;
+  const qrngService = new QrngService();
 
-const receivedBytesCount = Buffer.alloc(4);
+  try {
+    randomNumbers = await qrngService.getArray(parseInt(req.params.count, 10));
+  } catch (e) {
+    res.send(e);
+  } finally {
+    next();
+  }
 
-
-
-// You can also access just functions in the current process by passing a null
-// int qrng_connect_and_get_byte_array(const char *username, const char *password, char *byte_array, int byte_array_size, int *actual_bytes_rcvd);
-var libQRNG = ffi.Library('libQRNG', {
-
-  'qrng_connect_and_get_byte_array': [ 'int', [ 'string' , 'string', 'pointer', 'int', 'pointer'] ]
-});
-console.log('Requesting quantum numbers...');
-
-const retCode = libQRNG.qrng_connect_and_get_byte_array(USERNAME, PASSWORD, buffer, BUFFER_SIZE, receivedBytesCount);
-console.log(`Received: ${libbQRNGcodes[retCode]}`);
-
-const qrnArr = new Array(BUFFER_SIZE);
-const receivedBytes =  receivedBytesCount.readInt32LE(0);
-let i = 0;
-while (i < receivedBytes) {
-	qrnArr[i] = buffer.readUInt8(i);
-	i++;
+  res.send(randomNumbers);
 }
-console.log(qrnArr);
 
+const server = restify.createServer();
+server.get('/randomNumbers/:count', getRandomNumbers);
 
+server.listen(config.SERVER_PORT || 80, () => {
+  log('%s listening at %s', server.name, server.url);
+});
 

@@ -1,7 +1,7 @@
 const ffi = require('ffi');
-const ref = require('ref');
+const config = require('../config');
 
-const returnCodes = [
+const returnCodeStrings = [
   'QRNG_SUCCESS',
   'QRNG_ERR_FAILED_TO_BASE_INIT',
   'QRNG_ERR_FAILED_TO_INIT_SOCK',
@@ -23,9 +23,48 @@ const returnCodes = [
   'QRNG_ERR_FAILED_TO_READ_AUTH_REPLY',
   'QRNG_ERR_FAILED_TO_READ_USER_REPLY',
   'QRNG_ERR_FAILED_TO_READ_PASS_REPLY',
-  'QRNG_ERR_FAILED_TO_SEND_COMMAND'
+  'QRNG_ERR_FAILED_TO_SEND_COMMAND',
 ];
 
 const QrngService = function constructQrngService() {
-  
-}
+  this.libQRNG = ffi.Library('libQRNG', {
+    qrng_connect_and_get_byte_array: ['int', ['string', 'string', 'pointer', 'int', 'pointer']],
+  });
+};
+
+QrngService.prototype.getArray = async function getArray(bufferSize) {
+  const qrnBuffer = Buffer.alloc(bufferSize);
+  const receivedBytesBuffer = Buffer.alloc(4);
+  const returnCode = await new Promise((resolve, reject) => {
+    this.libQRNG.qrng_connect_and_get_byte_array
+      .async(
+        config.QRNG_USER,
+        config.QRNG_PASSWORD,
+        qrnBuffer,
+        bufferSize,
+        receivedBytesBuffer,
+        (err, res) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        },
+      );
+  });
+
+  if (returnCode !== 0) {
+    throw new Error(`QRNG service error: ${returnCodeStrings[returnCode]}`);
+  }
+
+  const arr = new Array(bufferSize);
+  const receivedBytes = receivedBytesBuffer.readInt32LE(0);
+  for (let i = 0; i < receivedBytes; i += 1) {
+    arr[i] = qrnBuffer.readUInt8(i);
+  }
+
+  return arr;
+};
+
+module.exports = QrngService;
+

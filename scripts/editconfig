@@ -1,0 +1,1 @@
+ansible-vault edit --ask-vault-pass config.json

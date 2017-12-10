@@ -17,6 +17,8 @@ async function getRandomNumbers(req, res, next) {
     next();
   }
 
+  res.header('Access-Control-Allow-Origin:*');
+
   res.send({ count: numbersCount, numbers: randomNumbers });
 }
 

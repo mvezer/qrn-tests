@@ -1,1 +1,1 @@
-docker push mvezer/qrn-service:$(git rev-parse HEAD | cut -c 1-6)
+docker push mvezer/qrn-service

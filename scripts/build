@@ -1,3 +1,4 @@
 ansible-vault decrypt --vault-password-file=~/.ansible/vault_pass config.json 
-docker build -t mvezer/qrn-service:$(git rev-parse HEAD | cut -c 1-6) .
+NEW_TAG="$(git rev-parse HEAD | cut -c 1-6)"
+docker build -t mvezer/qrn-service:latest -t mvezer/qrn-service:$NEW_TAG .
 ansible-vault encrypt --vault-password-file=~/.ansible/vault_pass config.json
